@@ -1,0 +1,81 @@
+// ==UserScript==
+// @name Songsterr Premium Unlocker
+// @namespace https://example.com/grok-custom
+// @version 1.1.0
+// @description Unlock Songsterr premium features via DOM manipulation.
+// @author Grok (xAI)
+// @match http://*.songsterr.com/*
+// @match https://*.songsterr.com/*
+// @run-at document-end
+// @grant none
+// ==/UserScript==
+
+(function () {
+    'use strict';
+
+    function showError(message) {
+        alert('Songsterr Premium Unlocker Error: ' + message + '\nPlease report issues if they persist.');
+    }
+
+    // Функция для обновления состояния пользователя
+    function unlockPremium() {
+        try {
+            const stateElement = document.getElementById('state');
+            if (!stateElement) {
+                console.log('Songsterr Premium Unlocker: No state element found.');
+                return;
+            }
+
+            let stateJson = JSON.parse(stateElement.innerHTML || '{}');
+            stateJson.user = stateJson.user || {};
+            stateJson.user.hasPlus = true;
+
+            if (stateJson.user.profile) {
+                stateJson.user.profile.plan = 'plus';
+                stateJson.user.profile.subscription = stateJson.user.profile.subscription || {};
+                stateJson.user.profile.subscription.plan = { id: 'plus' };
+            } else {
+                stateJson.user.profile = {
+                    id: 99999999,
+                    uid: 99999999,
+                    email: 'premiumuser@example.com',
+                    name: 'PremiumUser',
+                    plan: 'plus',
+                    permissions: [],
+                    subscription: { plan: { id: 'plus' } },
+                    sra_license: 'none',
+                    bonus: { activeStart: null, activeEnd: null, balance: 0, balanceMinutes: 0 },
+                    bonusPurchasedFeatures: [],
+                    signature: 'dummy_signature',
+                    created_at: '2025-08-12T00:00:00Z',
+                    last_signin_date: '2025-08-12T00:00:00Z',
+                    hadPlusBeforeSE: false,
+                    password_change_required: false,
+                    preferencesNotifications: { notificationsEmails: false, researchEmails: false }
+                };
+            }
+
+            stateElement.innerHTML = JSON.stringify(stateJson);
+            console.log('Songsterr Premium Unlocker: State updated successfully.');
+
+            // Попытка перезагрузки табулатуры
+            const tablature = document.getElementById('tablature');
+            if (!tablature) {
+                const appTab = document.getElementById('apptab');
+                if (appTab) {
+                    appTab.remove();
+                    console.log('Songsterr Premium Unlocker: Removed apptab to force reload.');
+                }
+            }
+        } catch (e) {
+            showError('Failed to unlock premium: ' + e.message);
+        }
+    }
+
+    // Выполняем после загрузки страницы
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', unlockPremium);
+    } else {
+        unlockPremium();
+    }
+})();
